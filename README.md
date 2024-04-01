@@ -9,3 +9,4 @@ This repo started as a fork of https://github.com/neurodrone/crdt.
 ```
 % go test -run -v "(TestInfPhase*)"
 ```
+- todo: implement and test `merge()`
