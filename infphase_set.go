@@ -35,9 +35,7 @@ func (s *IPSet) Add(elem interface{}) {
 	// else if s.dict[elem] is even => s.dict[elem] += 1
 	_, ok := s.dict[elem]
 	if !ok {
-		newGCounter := NewGCounter()
-		newGCounter.Inc()
-		s.dict[elem] = newGCounter
+		s.dict[elem] = NewGCounterInit(1)
 	} else if s.dict[elem].Count() % 2 == 0 {
 		s.dict[elem].Inc()
 	}
@@ -100,13 +98,9 @@ func (s *IPSet) Merge(s_ *IPSet) {
 		// otherwise, set local counter for elem_ to max(counter, counter_)
 		counter, ok := s.dict[elem_]
 		if !ok {
-			newGCounter := NewGCounter()
-			newGCounter.Inc()
-			s.dict[elem_] = newGCounter
+			s.dict[elem_] = NewGCounterInit(1)
 		} else {
-			newGCounter := NewGCounter()
-			newGCounter.IncVal(max(counter.Count(), counter_.Count()))
-			s.dict[elem_] = newGCounter
+			s.dict[elem_] = NewGCounterInit(max(counter.Count(), counter_.Count()))
 		}
 	}
 }
