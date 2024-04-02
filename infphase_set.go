@@ -79,7 +79,7 @@ func (s *IPSet) Len() int {
 }
 
 //
-// Get all existing elements in the set
+// Materialize the set
 //
 func (s *IPSet) Elems() []interface{} {
 	elems := make([]interface{}, 0)
@@ -91,16 +91,22 @@ func (s *IPSet) Elems() []interface{} {
 	return elems
 }
 
-// type gsetJSON struct {
-// 	T string        `json:"type"`
-// 	E []interface{} `json:"e"`
-// }
-
-// // MarshalJSON will be used to generate a serialized output
-// // of a given GSet.
-// func (g *GSet) MarshalJSON() ([]byte, error) {
-// 	return json.Marshal(&gsetJSON{
-// 		T: "g-set",
-// 		E: g.Elems(),
-// 	})
-// }
+//
+// Merge with another replica
+//
+func (s *IPSet) Merge(s_ *IPSet) {
+	for elem_, counter_ := range s_.dict {
+		// if elem_ is not in local replica => add
+		// otherwise, set local counter for elem_ to max(counter, counter_)
+		counter, ok := s.dict[elem_]
+		if !ok {
+			newGCounter := NewGCounter()
+			newGCounter.Inc()
+			s.dict[elem_] = newGCounter
+		} else {
+			newGCounter := NewGCounter()
+			newGCounter.IncVal(max(counter.Count(), counter_.Count()))
+			s.dict[elem_] = newGCounter
+		}
+	}
+}

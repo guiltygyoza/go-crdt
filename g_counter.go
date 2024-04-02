@@ -24,6 +24,15 @@ func NewGCounter() *GCounter {
 	}
 }
 
+func NewGCounterInit(val int) *GCounter {
+	g := GCounter{
+		ident:   uuid.NewV4().String(),
+		counter: make(map[string]int),
+	}
+	g.IncVal(val)
+	return &g
+}
+
 // Inc increments the GCounter by the value of 1 everytime it
 // is called.
 func (g *GCounter) Inc() {

@@ -104,3 +104,69 @@ func TestInfPhaseSetAddRemoveSequence(t *testing.T) {
 		}
 	}
 }
+
+func TestInfPhaseSetMerge(t *testing.T) {
+	for _, tt := range []struct {
+		fnMutateSet1 		func(*IPSet)
+		fnMutateSet2 		func(*IPSet)
+		mergeResult         map[interface{}]*GCounter
+		description			string
+	}{
+		{
+			func(s *IPSet) {
+				s.Add(1)
+				s.Add(1)
+				s.Remove(3)
+				s.Add(3)
+				s.Remove(3)
+				s.Add(5)
+				s.Remove(5)
+				s.Add(5)
+			},
+			func(s *IPSet) {
+				s.Add(1)
+				s.Remove(1)
+				s.Add(3)
+			},
+			map[interface{}]*GCounter {
+				1:NewGCounterInit(2),
+				3:NewGCounterInit(2),
+				5:NewGCounterInit(3),
+			},
+			"Merging {1:1, 3:2, 5:3} and {1:2, 3:1} should yield {1:2, 3:2, 5:3}",
+		},
+		{
+			func(s *IPSet) {
+				s.Add('a')
+				s.Add('b')
+			},
+			func(s *IPSet) {
+				s.Add(5)
+				s.Remove(7)
+				s.Add(7)
+			},
+			map[interface{}]*GCounter {
+				'a':NewGCounterInit(1),
+				'b':NewGCounterInit(1),
+				5:NewGCounterInit(1),
+				7:NewGCounterInit(1),
+			},
+			"Merging {'a':1, 'b':1} and {5:1, 7:1} should yield {'a':1, 'b':1, 5:1, 7:1}",
+		},
+	} {
+		ipset1 := NewIPSet()
+		tt.fnMutateSet1(ipset1)
+
+		ipset2 := NewIPSet()
+		tt.fnMutateSet2(ipset2)
+
+		ipset1.Merge(ipset2)
+
+		for elem_, counter_ := range tt.mergeResult {
+			counter, ok := ipset1.dict[elem_]
+			if !ok || counter.Count()!=counter_.Count() {
+				t.Errorf("Set's internal dictionary should contain the following entry: %q:%q", elem_, counter_.Count())
+			}
+		}
+	}
+}
